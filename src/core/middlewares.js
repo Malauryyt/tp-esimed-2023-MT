@@ -1,9 +1,9 @@
 const express = require('express');
 const cors = require('cors')
 const { DateTime } = require('luxon');
+const {expressjwt: jwt} = require("express-jwt");
 
 const initpublicRepertory = (app) => app.use(express.static( 'public'));
-
 
 const initJsonHandlerMiddlware = (app) => app.use(express.json());
 const initcors = (app) => app.use( cors());
@@ -28,12 +28,21 @@ const initLoggerMiddlware = (app) => {
   });
 };
 
+const initLogInMiddleware = (app) => {
+  app.use(
+      jwt({
+        secret: "shhh",
+        algorithms: ["HS256"],
+      }).unless({ path: [{ url: "/users", methods: ["POST"] }, { url: "/auth/login", methods: ["POST"] }] })
+  );
+}
 // appel deux fonction
 // la premier interprete le contenue json
 
 exports.initializeConfigMiddlewares = (app) => {
   initJsonHandlerMiddlware(app);
   initLoggerMiddlware(app);
+  initLogInMiddleware(app);
   initpublicRepertory(app);
   initcors(app);
 }

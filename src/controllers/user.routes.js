@@ -1,71 +1,37 @@
 const express = require('express');
 const router = express.Router();
 const userRepository = require('../models/user-repository');
-const { Sequelize, Model, DataTypes } = require('sequelize');
 
-
-
-router.get('/test-sqlite', async(req,res) =>{
-
-  // const sequelize = new Sequelize('sqlite::memory:');
-  const sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: 'src/model/squilite.db.js'
-  });
-
-  const User = sequelize.define('User', {
-    username: DataTypes.STRING,
-    birthday: DataTypes.DATE,
-  });
-
-  await User.sync();
-
-  const jane = await  User.create({
-    username: 'janedoe',
-    birthday: new Date(1980, 6, 20),
-  });
-  const gggg = await  User.create({
-    username: 'sgsfrhgd',
-    birthday: new Date(1985, 7, 20),
-  });
-
-  const users = await User.findAll();
-  res.send(users);
-
+// la on recup tous les userd
+router.get('/', async (req, res) => {
+  res.send(await userRepository.getUsers());
 });
 
-router.get('/', (req, res) => {
-  res.send(userRepository.getUsers());
-});
-
-router.get('/:firstName', (req, res) => {
-  const foundUser = userRepository.getUserByFirstName(req.params.firstName);
+//get user
+router.get('/:firstName', async (req, res) => {
+  const foundUser = await userRepository.getUserByFirstName(req.params.firstName);
 
   if (!foundUser) {
-    throw new Error('User not found');
+    res.status(500).send('User not found');
+    return;
   }
 
   res.send(foundUser);
 });
 
-router.post('/', (req, res) => {
-  const existingUser = userRepository.getUserByFirstName(req.body.firstName);
-
-  if (existingUser) {
-    throw new Error('Unable to create the user');
-  }
-
-  userRepository.createUser(req.body);
+//create user
+router.post('/', async (req, res) => {
+  await userRepository.createUser(req.body);
   res.status(201).end();
 });
 
-router.put('/:id', (req, res) => {
-  userRepository.updateUser(req.params.id, req.body);
+router.put('/:id', async (req, res) => {
+  await userRepository.updateUser(req.params.id, req.body).catch((err) => res.status(500).send(err.message));
   res.status(204).end();
 });
 
-router.delete('/:id', (req, res) => {
-  userRepository.deleteUser(req.params.id);
+router.delete('/:id', async (req, res) => {
+  await userRepository.deleteUser(req.params.id);
   res.status(204).end();
 });
 
